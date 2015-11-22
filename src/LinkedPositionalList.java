@@ -1,3 +1,6 @@
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 /**
  * Created by samso on 2015-11-22.
  */
@@ -5,6 +8,67 @@ public class LinkedPositionalList<E> implements PositionalList<E> {
     private Node<E> header;
     private Node<E> trailer;
     private int size = 0;
+
+    private class PositionIterator implements Iterator<Position<E>> {
+        private Position<E> cursor = first();
+        private Position<E> recent = null;
+
+        @Override
+        public boolean hasNext() {
+            return (cursor != null);
+        }
+
+        @Override
+        public Position<E> next() throws NoSuchElementException {
+            if (cursor == null)
+                throw new NoSuchElementException("nothing left");
+            recent = cursor;
+            cursor = after(cursor);
+            return recent;
+        }
+
+        @Override
+        public void remove() throws IllegalStateException {
+        if (recent == null)
+            throw new IllegalStateException("nothing to remove");
+            LinkedPositionalList.this.remove(recent);
+            recent = null;
+        }
+    }
+
+    private class PositionIterable implements Iterable<Position<E>> {
+        @Override
+        public Iterator<Position<E>> iterator() {
+            return new PositionIterator();
+        }
+    }
+
+    public Iterable<Position<E>> positions() {
+        return new PositionIterable();
+    }
+
+    private class ElementIterator implements Iterator<E> {
+        Iterator<Position<E>> posIterator = new PositionIterator();
+
+        @Override
+        public boolean hasNext() {
+            return posIterator.hasNext();
+        }
+
+        @Override
+        public E next() {
+            return posIterator.next().getElement();
+        }
+
+        @Override
+        public void remove() {
+            posIterator.remove();
+        }
+    }
+
+    public Iterator<E> iterator() {
+        return new ElementIterator();
+    }
 
     public LinkedPositionalList() {
         header = new Node<>(null, null, null);
@@ -146,6 +210,23 @@ public class LinkedPositionalList<E> implements PositionalList<E> {
 
         public void setNext(Node<E> n) {
             next = n;
+        }
+    }
+
+    public static void insertionSort(PositionalList<Integer> list) {
+        Position<Integer> marker = list.first();
+        while (marker != list.last()) {
+            Position<Integer> pivot = list.after(marker);
+            int value = pivot.getElement();
+            if (value > marker.getElement())
+                marker = pivot;
+            else {
+                Position<Integer> walk = marker;
+                while (walk != list.first() && list.before(walk).getElement() > value)
+                    walk = list.before(walk);
+                list.remove(pivot);
+                list.addBefore(walk, value);
+            }
         }
     }
 }
