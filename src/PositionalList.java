@@ -61,4 +61,6 @@ public interface PositionalList<E> {
      * Remove the element at Position p and returns it (invalidate p)
      */
     E remove(Position<E> p) throws IllegalArgumentException;
+
+    Iterable<Position<E>> positions();
 }
